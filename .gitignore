@@ -1,1 +1,3 @@
 ec2-cost-analysis/bin
+.idea
+*.csv
