@@ -10,18 +10,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 )
+
+type AwsClient struct {
+	ec2    *ec2.EC2
+	output *string
+}
 
 type RawData struct {
 	InstanceType string
 	Role         string
 	Environment  string
-}
-
-type AwsClient struct {
-	ec2     *ec2.EC2
-	outfile *string
 }
 
 type Data struct {
@@ -35,10 +37,10 @@ type CSVdata struct {
 	Data []Data
 }
 
-func NewAwsClient(region, outfile *string) *AwsClient {
+func NewAwsClient(region, output *string) *AwsClient {
 	c := &AwsClient{
-		ec2:     ec2.New(session.New(), &aws.Config{Region: region}),
-		outfile: outfile,
+		ec2:    ec2.New(session.New(), &aws.Config{Region: region}),
+		output: output,
 	}
 	return c
 }
@@ -157,7 +159,7 @@ func GetEnvironments(d []RawData) []string {
 	return uniqueEnvironments
 }
 
-func GenerateCSV(d []CSVdata, outfile *string) {
+func GenerateCSV(d []CSVdata, output *string) {
 	var records [][]string
 	records = append(records, []string{"Role", "Environment", "InstanceType", "InstanceCount"})
 	for _, data := range d {
@@ -167,7 +169,15 @@ func GenerateCSV(d []CSVdata, outfile *string) {
 			records = append(records, []string{role, dat.Environment, dat.InstanceType, strconv.Itoa(dat.InstanceCount)})
 		}
 	}
-	file, err := os.Create(*outfile)
+	if _, err := os.Stat(*output); os.IsNotExist(err) {
+		os.MkdirAll(*output, os.ModePerm)
+
+	}
+	t := time.Now()
+	timestamp := fmt.Sprintf("%02d-%02d-%d_%02d-%02d-%02d", t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), t.Second())
+	outFilename := fmt.Sprintf("ec2instance_%s.csv", timestamp)
+	outfile := filepath.Join(*output, outFilename)
+	file, err := os.Create(outfile)
 
 	if err != nil {
 		log.Fatal("Could not create output csv", err)
@@ -190,13 +200,17 @@ func (a *AwsClient) Handler() {
 	environments := GetEnvironments(rawDataSet)
 
 	csvDataList := GenerateCSVData(rawDataSet, roles, environments)
-	GenerateCSV(csvDataList, a.outfile)
+	GenerateCSV(csvDataList, a.output)
 }
 
 func main() {
 	awsRegionPtr := flag.String("region", "us-east-1", "AWS region")
-	outfilePtr := flag.String("output", "/tmp/ec2instances.csv", "Output file location")
+
+	outputPtr := flag.String("output", "/tmp", "Output directory location")
+
 	flag.Parse()
-	awsClient := NewAwsClient(awsRegionPtr, outfilePtr)
+
+	awsClient := NewAwsClient(awsRegionPtr, outputPtr)
+
 	awsClient.Handler()
 }
