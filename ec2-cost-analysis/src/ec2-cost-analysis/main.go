@@ -17,6 +17,7 @@ import (
 
 type AwsClient struct {
 	ec2    *ec2.EC2
+	region *string
 	output *string
 }
 
@@ -41,6 +42,7 @@ func NewAwsClient(region, output *string) *AwsClient {
 	c := &AwsClient{
 		ec2:    ec2.New(session.New(), &aws.Config{Region: region}),
 		output: output,
+		region: region,
 	}
 	return c
 }
@@ -89,11 +91,11 @@ func GenerateCSVData(d []RawData, roles, environments []string) []CSVdata {
 		tempCSVdata := CSVdata{}
 		tempCSVdata.Role = role
 		csvData.Role = role
-		for _, data := range d {
+		for _, rawData := range d {
 			var tempData Data
-			if data.Role == role {
-				tempData.Environment = data.Environment
-				tempData.InstanceType = data.InstanceType
+			if rawData.Role == role {
+				tempData.Environment = rawData.Environment
+				tempData.InstanceType = rawData.InstanceType
 				tempCSVdata.Data = append(tempCSVdata.Data, tempData)
 			}
 		}
@@ -159,14 +161,71 @@ func GetEnvironments(d []RawData) []string {
 	return uniqueEnvironments
 }
 
-func GenerateCSV(d []CSVdata, output *string) {
+func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2InstancePrice) {
 	var records [][]string
-	records = append(records, []string{"Role", "Environment", "InstanceType", "InstanceCount"})
+	records = append(records, []string{
+		"Role",
+		"Environment",
+		"InstanceType",
+		"InstanceCount",
+		"OnDemand",
+		"YrTerm1ConvertibleAllUpfront",
+		"YrTerm1ConvertibleNoUpfront",
+		"YrTerm1ConvertiblePartialUpfront",
+		"YrTerm1StandardAllUpfront",
+		"YrTerm1StandardNoUpfront",
+		"YrTerm1StandardPartialUpfront",
+		"YrTerm3ConvertibleAllUpfront",
+		"YrTerm3ConvertibleNoUpfront",
+		"YrTerm3ConvertiblePartialUpfront",
+		"YrTerm3StandardAllUpfront",
+		"YrTerm3StandardNoUpfront",
+		"YrTerm3StandardPartialUpfront",
+	})
 	for _, data := range d {
 
 		role := data.Role
 		for _, dat := range data.Data {
-			records = append(records, []string{role, dat.Environment, dat.InstanceType, strconv.Itoa(dat.InstanceCount)})
+			instanceType := dat.InstanceType
+			instanceCount := strconv.Itoa(dat.InstanceCount)
+
+			// All prices calculated on yearly basis
+
+			totalUsageHoursPerYear := float64(24*365) * float64(dat.InstanceCount)
+
+			OnDemand := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].OnDemand*totalUsageHoursPerYear)
+			YrTerm1ConvertibleAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertibleAllUpfront*totalUsageHoursPerYear)
+			YrTerm1ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertibleNoUpfront*totalUsageHoursPerYear)
+			YrTerm1ConvertiblePartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertiblePartialUpfront*totalUsageHoursPerYear)
+			YrTerm1StandardAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardAllUpfront*totalUsageHoursPerYear)
+			YrTerm1StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardNoUpfront*totalUsageHoursPerYear)
+			YrTerm1StandardPartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardPartialUpfront*totalUsageHoursPerYear)
+			YrTerm3ConvertibleAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertibleAllUpfront*totalUsageHoursPerYear)
+			YrTerm3ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertibleNoUpfront*totalUsageHoursPerYear)
+			YrTerm3ConvertiblePartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertiblePartialUpfront*totalUsageHoursPerYear)
+			YrTerm3StandardAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardAllUpfront*totalUsageHoursPerYear)
+			YrTerm3StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardNoUpfront*totalUsageHoursPerYear)
+			YrTerm3StandardPartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardPartialUpfront*totalUsageHoursPerYear)
+
+			records = append(records, []string{
+				role,
+				dat.Environment,
+				instanceType,
+				instanceCount,
+				OnDemand,
+				YrTerm1ConvertibleAllUpfront,
+				YrTerm1ConvertibleNoUpfront,
+				YrTerm1ConvertiblePartialUpfront,
+				YrTerm1StandardAllUpfront,
+				YrTerm1StandardNoUpfront,
+				YrTerm1StandardPartialUpfront,
+				YrTerm3ConvertibleAllUpfront,
+				YrTerm3ConvertibleNoUpfront,
+				YrTerm3ConvertiblePartialUpfront,
+				YrTerm3StandardAllUpfront,
+				YrTerm3StandardNoUpfront,
+				YrTerm3StandardPartialUpfront,
+			})
 		}
 	}
 	if _, err := os.Stat(*output); os.IsNotExist(err) {
@@ -190,6 +249,7 @@ func GenerateCSV(d []CSVdata, output *string) {
 }
 
 func (a *AwsClient) Handler() {
+	ec2PriceList := GeneratePriceList(*a.region)
 	rawDataSet, err := a.DescribeInstances()
 
 	if err != nil {
@@ -200,13 +260,13 @@ func (a *AwsClient) Handler() {
 	environments := GetEnvironments(rawDataSet)
 
 	csvDataList := GenerateCSVData(rawDataSet, roles, environments)
-	GenerateCSV(csvDataList, a.output)
+	GenerateCSV(csvDataList, a.output, ec2PriceList)
 }
 
 func main() {
 	awsRegionPtr := flag.String("region", "us-east-1", "AWS region")
 
-	outputPtr := flag.String("output", "/tmp", "Output directory location")
+	outputPtr := flag.String("output", "/tmp/ec2pricing", "Output directory location")
 
 	flag.Parse()
 
