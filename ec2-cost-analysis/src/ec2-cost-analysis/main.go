@@ -99,7 +99,7 @@ func GenerateCSVData(d []RawData, roles, environments []string) []CSVdata {
 				tempCSVdata.Data = append(tempCSVdata.Data, tempData)
 			}
 		}
-		//fmt.Println(role, tempCSVdata.Data)
+
 
 		for _, env := range environments {
 			var instanceTypesForThisRoleInThisEnvironment []string
