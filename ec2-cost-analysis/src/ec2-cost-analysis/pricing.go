@@ -10,17 +10,17 @@ import (
 
 type ReservedInstancePrice struct {
 	YrTerm1ConvertibleAllUpfront     *string `json:"yrTerm1Convertible.allUpfront"`
-	YrTerm1ConvertibleNoUpfront      *string `json:"yrTerm1Convertible.noUpfront"`
 	YrTerm1ConvertiblePartialUpfront *string `json:"yrTerm1Convertible.partialUpfront"`
+	YrTerm1ConvertibleNoUpfront      *string `json:"yrTerm1Convertible.noUpfront"`
 	YrTerm1StandardAllUpfront        *string `json:"yrTerm1Standard.allUpfront"`
-	YrTerm1StandardNoUpfront         *string `json:"yrTerm1Standard.noUpfront"`
 	YrTerm1StandardPartialUpfront    *string `json:"yrTerm1Standard.partialUpfront"`
+	YrTerm1StandardNoUpfront         *string `json:"yrTerm1Standard.noUpfront"`
 	YrTerm3ConvertibleAllUpfront     *string `json:"yrTerm3Convertible.allUpfront"`
-	YrTerm3ConvertibleNoUpfront      *string `json:"yrTerm3Convertible.noUpfront"`
 	YrTerm3ConvertiblePartialUpfront *string `json:"yrTerm3Convertible.partialUpfront"`
+	YrTerm3ConvertibleNoUpfront      *string `json:"yrTerm3Convertible.noUpfront"`
 	YrTerm3StandardAllUpfront        *string `json:"yrTerm3Standard.allUpfront"`
-	YrTerm3StandardNoUpfront         *string `json:"yrTerm3Standard.noUpfront"`
 	YrTerm3StandardPartialUpfront    *string `json:"yrTerm3Standard.partialUpfront"`
+	YrTerm3StandardNoUpfront         *string `json:"yrTerm3Standard.noUpfront"`
 }
 
 type LinuxPriceDetail struct {
@@ -40,17 +40,17 @@ type PricingDetails struct {
 type EC2InstancePrice struct {
 	OnDemand                         *float64
 	YrTerm1ConvertibleAllUpfront     *float64
-	YrTerm1ConvertibleNoUpfront      *float64
 	YrTerm1ConvertiblePartialUpfront *float64
+	YrTerm1ConvertibleNoUpfront      *float64
 	YrTerm1StandardAllUpfront        *float64
-	YrTerm1StandardNoUpfront         *float64
 	YrTerm1StandardPartialUpfront    *float64
+	YrTerm1StandardNoUpfront         *float64
 	YrTerm3ConvertibleAllUpfront     *float64
-	YrTerm3ConvertibleNoUpfront      *float64
 	YrTerm3ConvertiblePartialUpfront *float64
+	YrTerm3ConvertibleNoUpfront      *float64
 	YrTerm3StandardAllUpfront        *float64
-	YrTerm3StandardNoUpfront         *float64
 	YrTerm3StandardPartialUpfront    *float64
+	YrTerm3StandardNoUpfront         *float64
 }
 
 func GeneratePriceList(awsRegion string) map[string]EC2InstancePrice {

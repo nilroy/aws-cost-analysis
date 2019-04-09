@@ -170,17 +170,17 @@ func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2Instanc
 		"InstanceCount",
 		"OnDemand",
 		"YrTerm1ConvertibleAllUpfront",
-		"YrTerm1ConvertibleNoUpfront",
 		"YrTerm1ConvertiblePartialUpfront",
+		"YrTerm1ConvertibleNoUpfront",
 		"YrTerm1StandardAllUpfront",
-		"YrTerm1StandardNoUpfront",
 		"YrTerm1StandardPartialUpfront",
+		"YrTerm1StandardNoUpfront",
 		"YrTerm3ConvertibleAllUpfront",
-		"YrTerm3ConvertibleNoUpfront",
 		"YrTerm3ConvertiblePartialUpfront",
+		"YrTerm3ConvertibleNoUpfront",
 		"YrTerm3StandardAllUpfront",
-		"YrTerm3StandardNoUpfront",
 		"YrTerm3StandardPartialUpfront",
+		"YrTerm3StandardNoUpfront",
 	})
 	for _, data := range d {
 
@@ -194,18 +194,22 @@ func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2Instanc
 			totalUsageHoursPerYear := float64(24*365) * float64(dat.InstanceCount)
 
 			OnDemand := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].OnDemand*totalUsageHoursPerYear)
+
 			YrTerm1ConvertibleAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertibleAllUpfront*totalUsageHoursPerYear)
-			YrTerm1ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertibleNoUpfront*totalUsageHoursPerYear)
 			YrTerm1ConvertiblePartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertiblePartialUpfront*totalUsageHoursPerYear)
+			YrTerm1ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1ConvertibleNoUpfront*totalUsageHoursPerYear)
+
 			YrTerm1StandardAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardAllUpfront*totalUsageHoursPerYear)
-			YrTerm1StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardNoUpfront*totalUsageHoursPerYear)
 			YrTerm1StandardPartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardPartialUpfront*totalUsageHoursPerYear)
+			YrTerm1StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm1StandardNoUpfront*totalUsageHoursPerYear)
+
 			YrTerm3ConvertibleAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertibleAllUpfront*totalUsageHoursPerYear)
-			YrTerm3ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertibleNoUpfront*totalUsageHoursPerYear)
 			YrTerm3ConvertiblePartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertiblePartialUpfront*totalUsageHoursPerYear)
+			YrTerm3ConvertibleNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3ConvertibleNoUpfront*totalUsageHoursPerYear)
+
 			YrTerm3StandardAllUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardAllUpfront*totalUsageHoursPerYear)
-			YrTerm3StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardNoUpfront*totalUsageHoursPerYear)
 			YrTerm3StandardPartialUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardPartialUpfront*totalUsageHoursPerYear)
+			YrTerm3StandardNoUpfront := fmt.Sprintf("%.2f", *ec2PriceList[instanceType].YrTerm3StandardNoUpfront*totalUsageHoursPerYear)
 
 			records = append(records, []string{
 				role,
@@ -214,17 +218,17 @@ func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2Instanc
 				instanceCount,
 				OnDemand,
 				YrTerm1ConvertibleAllUpfront,
-				YrTerm1ConvertibleNoUpfront,
 				YrTerm1ConvertiblePartialUpfront,
+				YrTerm1ConvertibleNoUpfront,
 				YrTerm1StandardAllUpfront,
-				YrTerm1StandardNoUpfront,
 				YrTerm1StandardPartialUpfront,
+				YrTerm1StandardNoUpfront,
 				YrTerm3ConvertibleAllUpfront,
-				YrTerm3ConvertibleNoUpfront,
 				YrTerm3ConvertiblePartialUpfront,
+				YrTerm3ConvertibleNoUpfront,
 				YrTerm3StandardAllUpfront,
-				YrTerm3StandardNoUpfront,
 				YrTerm3StandardPartialUpfront,
+				YrTerm3StandardNoUpfront,
 			})
 		}
 	}
