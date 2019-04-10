@@ -66,6 +66,11 @@ func (a *AwsClient) DescribeInstances() ([]RawData, error) {
 		for _, reservation := range result.Reservations {
 			for _, instance := range reservation.Instances {
 				rawData.InstanceType = aws.StringValue(instance.InstanceType)
+
+				if aws.StringValue(instance.State.Name) != "running" {
+					continue
+				}
+
 				for _, tag := range instance.Tags {
 					if aws.StringValue(tag.Key) == "Environment" {
 						rawData.Environment = aws.StringValue(tag.Value)
