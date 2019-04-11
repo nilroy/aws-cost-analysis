@@ -1,4 +1,8 @@
 ec2-cost-analysis/bin
+ec2-cost-analysis/pkg
+ec2-cost-analysis/src/ec2-cost-analysis/Gopkg.toml
+ec2-cost-analysis/src/ec2-cost-analysis/Gopkg.lock
+ec2-cost-analysis/src/ec2-cost-analysis/vendor
 .idea
 *.csv
 outputs
