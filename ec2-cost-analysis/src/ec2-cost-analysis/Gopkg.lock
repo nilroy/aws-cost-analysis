@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:f51c5f7a3169fa9a53bf2de43eaf565a444c60f3885afae093fc6024117803ea"
+  digest = "1:9a3a9745ae9ce61759e1822cc5cb7e48cd2d39f599f2676b22f1b44529eca465"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -24,25 +24,27 @@
     "aws/session",
     "aws/signer/v4",
     "internal/ini",
+    "internal/s3err",
     "internal/sdkio",
     "internal/sdkrand",
     "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
-    "private/protocol/json/jsonutil",
-    "private/protocol/jsonrpc",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
+    "private/protocol/restxml",
     "private/protocol/xml/xmlutil",
     "service/ec2",
-    "service/pricing",
+    "service/s3",
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "4e871608b534ce2562c8330cf41d001db1c5d7d3"
-  version = "v1.19.8"
+  revision = "56c1def75689cceec1fa6f14c2eedb4b798827f9"
+  version = "v1.19.11"
 
 [[projects]]
   digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
@@ -58,7 +60,7 @@
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/ec2",
-    "github.com/aws/aws-sdk-go/service/pricing",
+    "github.com/aws/aws-sdk-go/service/s3",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

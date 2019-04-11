@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/csv"
 	"errors"
 	"flag"
@@ -8,7 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,9 +19,11 @@ import (
 )
 
 type AwsClient struct {
-	ec2    *ec2.EC2
-	region *string
-	output *string
+	ec2     *ec2.EC2
+	s3      *s3.S3
+	region  *string
+	tempDir *string
+	s3Dir   *string
 }
 
 type RawData struct {
@@ -38,11 +43,13 @@ type CSVdata struct {
 	Data []Data
 }
 
-func NewAwsClient(region, output *string) *AwsClient {
+func NewAwsClient(region, tempDir, s3Dir *string) *AwsClient {
 	c := &AwsClient{
-		ec2:    ec2.New(session.New(), &aws.Config{Region: region}),
-		output: output,
-		region: region,
+		ec2:     ec2.New(session.New(), &aws.Config{Region: region}),
+		s3:      s3.New(session.New(), &aws.Config{Region: region}),
+		tempDir: tempDir,
+		s3Dir:   s3Dir,
+		region:  region,
 	}
 	return c
 }
@@ -105,7 +112,6 @@ func GenerateCSVData(d []RawData, roles, environments []string) []CSVdata {
 			}
 		}
 
-
 		for _, env := range environments {
 			var instanceTypesForThisRoleInThisEnvironment []string
 			var finalData Data
@@ -166,7 +172,7 @@ func GetEnvironments(d []RawData) []string {
 	return uniqueEnvironments
 }
 
-func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2InstancePrice) {
+func GenerateCSV(d []CSVdata, tempDir *string, ec2PriceList map[string]EC2InstancePrice) (tempFilePath string) {
 	var records [][]string
 	records = append(records, []string{
 		"Role",
@@ -237,24 +243,52 @@ func GenerateCSV(d []CSVdata, output *string, ec2PriceList map[string]EC2Instanc
 			})
 		}
 	}
-	if _, err := os.Stat(*output); os.IsNotExist(err) {
-		os.MkdirAll(*output, os.ModePerm)
+	if _, err := os.Stat(*tempDir); os.IsNotExist(err) {
+		os.MkdirAll(*tempDir, os.ModePerm)
 
 	}
 	t := time.Now()
 	timestamp := fmt.Sprintf("%02d-%02d-%d_%02d-%02d-%02d", t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), t.Second())
 	outFilename := fmt.Sprintf("ec2instance_%s.csv", timestamp)
-	outfile := filepath.Join(*output, outFilename)
+	outfile := filepath.Join(*tempDir, outFilename)
 	file, err := os.Create(outfile)
 
 	if err != nil {
-		log.Fatal("Could not create output csv", err)
+		log.Fatal("Could not create temp csv", err)
 	}
 	defer file.Close()
 
 	w := csv.NewWriter(file)
 
 	w.WriteAll(records)
+	return outfile
+}
+
+func (a *AwsClient) UploadToS3(filePath string) error {
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	fileInfo, _ := file.Stat()
+	size := fileInfo.Size()
+
+	buffer := make([]byte, size)
+	file.Read(buffer)
+	fileBytes := bytes.NewReader(buffer)
+	fileType := http.DetectContentType(buffer)
+	path := "/ec2/nosto-ec2-instance-details.csv"
+
+	input := &s3.PutObjectInput{
+		Body:          fileBytes,
+		Bucket:        a.s3Dir,
+		Key:           aws.String(path),
+		ContentLength: aws.Int64(size),
+		ContentType:   aws.String(fileType),
+	}
+	_, err = a.s3.PutObject(input)
+	return err
 }
 
 func (a *AwsClient) Handler() {
@@ -269,17 +303,42 @@ func (a *AwsClient) Handler() {
 	environments := GetEnvironments(rawDataSet)
 
 	csvDataList := GenerateCSVData(rawDataSet, roles, environments)
-	GenerateCSV(csvDataList, a.output, ec2PriceList)
+
+	tempFile := GenerateCSV(csvDataList, a.tempDir, ec2PriceList)
+	err = a.UploadToS3(tempFile)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.RemoveAll(tempFile)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage : %s -region <region> -s3 <s3 bucket name>", os.Args[0])
+	flag.PrintDefaults()
 }
 
 func main() {
 	awsRegionPtr := flag.String("region", "us-east-1", "AWS region")
 
-	outputPtr := flag.String("output", "/tmp/ec2pricing", "Output directory location")
+	tempPtr := flag.String("temp", "/tmp/ec2pricing", "temp directory location")
+
+	s3Ptr := flag.String("s3", "", "S3 upload location")
 
 	flag.Parse()
 
-	awsClient := NewAwsClient(awsRegionPtr, outputPtr)
+	if *s3Ptr == "" {
+		usage()
+		os.Exit(1)
+	}
+
+	awsClient := NewAwsClient(awsRegionPtr, tempPtr, s3Ptr)
 
 	awsClient.Handler()
 }
